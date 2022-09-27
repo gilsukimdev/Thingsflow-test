@@ -16,9 +16,7 @@ final class IssuesViewController: UIViewController {
     
     private let tableView = UITableView()
     private let searchController = UISearchController(searchResultsController: nil)
-    
-    private var query = "apple/swift"
-    
+        
     init(_ viewModel: IssuesViewModel = IssuesViewModel()) {
         self.viewModel = viewModel
         
@@ -38,11 +36,13 @@ final class IssuesViewController: UIViewController {
 
 extension IssuesViewController {
     private func bind() {
-        let inpjut = IssuesViewModel.Input(
-            viewWillAppear: rx.viewWillAppear.take(1).asObservable()
+        
+        let input = IssuesViewModel.Input(
+            viewWillAppear: rx.viewWillAppear.take(1).asObservable(),
+            searchText: searchController.searchBar.rx.text.orEmpty.asObservable()
         )
         
-        let output = viewModel.transform(input: inpjut)
+        let output = viewModel.transform(input: input)
         
         output.cellData
             .drive(tableView.rx.items) { tv, row, data in
@@ -54,12 +54,25 @@ extension IssuesViewController {
                 return cell
             }
             .disposed(by: disposeBag)
+        
+        output.query
+            .withUnretained(self)
+            .emit(onNext: { owner, query in
+                self.title = query
+            })
+            .disposed(by: disposeBag)
+        
+        output.errorMsg
+            .withUnretained(self)
+            .emit(onNext: { owner, message in
+                self.alert(title: "에러", message: message)
+            })
+            .disposed(by: disposeBag)
     }
 }
 
 extension IssuesViewController {
     private func setupUI() {
-        title = query
         view.backgroundColor = .systemBackground
         navigationController?.navigationBar.prefersLargeTitles = true
         navigationItem.searchController = searchController

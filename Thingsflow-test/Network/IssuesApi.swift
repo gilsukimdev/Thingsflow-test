@@ -8,16 +8,15 @@
 import Foundation
 
 struct IssuesApi {
-//https://api.github.com/repos/apple/swift/issues
     private let scheme = "https"
     private let host = "api.github.com"
-    private let path = "/repos/apple/swift/issues"
+    private let path = "/repos/query/issues"
     
-    func makeGetIussuesComponets() -> URLComponents {
+    func makeGetIussuesComponets(_ query: String) -> URLComponents {
         var components = URLComponents()
         components.scheme = scheme
         components.host = host
-        components.path = path
+        components.path = path.replacingOccurrences(of: "query", with: query)
         return components
     }
 }

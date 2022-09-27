@@ -10,7 +10,7 @@ import RxSwift
 import RxCocoa
 
 protocol IssuesNetworkProtocol {
-    func fetchData() -> Observable<Result<[Issues], NetworkError>>
+    func fetchData(_ query: String) -> Observable<Result<[Issues], NetworkError>>
 }
 
 final class IssuesNetwork: IssuesNetworkProtocol {
@@ -21,11 +21,12 @@ final class IssuesNetwork: IssuesNetworkProtocol {
         self.session = session
     }
     
-    func fetchData() -> Observable<Result<[Issues], NetworkError>> {
-        guard let url = issuesApi.makeGetIussuesComponets().url else {
+    func fetchData(_ query: String) -> Observable<Result<[Issues], NetworkError>> {
+        guard let url = issuesApi.makeGetIussuesComponets(query).url else {
+            
             return .just(.failure(.invalidURL))
         }
-                
+        
         return session.rx.data(request: URLRequest(url: url))
             .map { data in
                 do {
@@ -34,6 +35,8 @@ final class IssuesNetwork: IssuesNetworkProtocol {
                 } catch {
                     return .failure(.invalidJSON)
                 }
+            } .catch { _ in
+                    .just(.failure(.invalidJSON))
             }
     }
 }

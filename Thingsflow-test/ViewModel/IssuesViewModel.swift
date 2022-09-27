@@ -19,19 +19,33 @@ struct IssuesViewModel: ViewModelType {
     
     struct Input {
         let viewWillAppear: Observable<Bool>
+        let searchText: Observable<String>
     }
     
     struct Output {
         let cellData: Driver<[IssuesTableCell.Data]>
+        let query: Signal<String>
         let errorMsg: Signal<String>
     }
     
     func transform(input: Input) -> Output {
         let cellData = PublishRelay<[IssuesTableCell.Data]>()
         let errorMsg = PublishSubject<String>()
+        let query = PublishRelay<String>()
         
-        let result = input.viewWillAppear
-            .map { _ in () }
+        input.searchText
+            .debounce(RxTimeInterval.milliseconds(500), scheduler: MainScheduler.instance)
+            .distinctUntilChanged()
+            .filter { !$0.isEmpty }
+            .bind(to: query)
+            .disposed(by: disposeBag)
+        
+        input.viewWillAppear
+            .map { _ in "apple/swift" }
+            .bind(to: query)
+            .disposed(by: disposeBag)
+        
+        let result = query
             .flatMapLatest(service.getIssueList)
             .share()
         
@@ -47,6 +61,7 @@ struct IssuesViewModel: ViewModelType {
         
         return Output(
             cellData: cellData.asDriver(onErrorDriveWith: .empty()),
+            query: query.asSignal(onErrorSignalWith: .empty()),
             errorMsg: errorMsg.asSignal(onErrorSignalWith: .empty())
         )
     }

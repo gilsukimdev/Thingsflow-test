@@ -9,7 +9,7 @@ import Foundation
 import RxSwift
 
 protocol IssuesServiceProtocol {
-    func getIssueList() -> Observable<Result<[Issues], NetworkError>>
+    func getIssueList(_ query: String) -> Observable<Result<[Issues], NetworkError>>
     func getIssuesModel(_ result: Result<[Issues], NetworkError>) -> [IssuesTableCell.Data]?
     func getIssuesError(_ result: Result<[Issues], NetworkError>) -> String?
 }
@@ -21,8 +21,8 @@ struct IssuesService: IssuesServiceProtocol {
         self.issuesNetwork = issuesNetwork
     }
     
-    func getIssueList() -> Observable<Result<[Issues], NetworkError>> {
-        return issuesNetwork.fetchData()
+    func getIssueList(_ query: String) -> Observable<Result<[Issues], NetworkError>> {
+        return issuesNetwork.fetchData(query)
     }
     
     func getIssuesModel(_ result: Result<[Issues], NetworkError>) -> [IssuesTableCell.Data]? {
