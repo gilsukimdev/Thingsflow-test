@@ -17,10 +17,22 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         
         window = UIWindow(windowScene: windowScene)
         
-        let rootViewController = IssuesViewController()
+        let scheme = connectionOptions.urlContexts.first?.url.absoluteString.replacingOccurrences(of: "thignsflow://", with: "")
+        
+        let rootViewController = IssuesViewController.init(query: scheme)
         let navigationController = UINavigationController(rootViewController: rootViewController)
         window?.rootViewController = navigationController
         window?.makeKeyAndVisible()
+    }
+    
+    func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
+        
+        if let scheme = URLContexts.first?.url.absoluteString.replacingOccurrences(of: "thignsflow://", with: "") {
+            if let vc = Utility.topViewController() as? IssuesViewController {
+                // 시간이 모자라 구현안됨..
+                vc.query = scheme
+            }
+        }
     }
 
     func sceneDidDisconnect(_ scene: UIScene) {

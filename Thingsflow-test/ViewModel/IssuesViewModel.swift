@@ -10,6 +10,7 @@ import RxSwift
 import RxCocoa
 
 struct IssuesViewModel: ViewModelType {
+    
     var disposeBag = DisposeBag()
     private let service: IssuesServiceProtocol
     
@@ -18,18 +19,17 @@ struct IssuesViewModel: ViewModelType {
     }
     
     struct Input {
-        let viewWillAppear: Observable<Bool>
         let searchText: Observable<String>
     }
     
     struct Output {
-        let cellData: Driver<[IssuesTableCell.Data]>
+        let cellData: Driver<[IssueData]>
         let query: Signal<String>
         let errorMsg: Signal<String>
     }
     
     func transform(input: Input) -> Output {
-        let cellData = PublishRelay<[IssuesTableCell.Data]>()
+        let cellData = PublishRelay<[IssueData]>()
         let errorMsg = PublishSubject<String>()
         let query = PublishRelay<String>()
         
@@ -37,11 +37,6 @@ struct IssuesViewModel: ViewModelType {
             .debounce(RxTimeInterval.milliseconds(500), scheduler: MainScheduler.instance)
             .distinctUntilChanged()
             .filter { !$0.isEmpty }
-            .bind(to: query)
-            .disposed(by: disposeBag)
-        
-        input.viewWillAppear
-            .map { _ in "apple/swift" }
             .bind(to: query)
             .disposed(by: disposeBag)
         

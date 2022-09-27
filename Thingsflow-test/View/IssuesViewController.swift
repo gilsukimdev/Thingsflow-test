@@ -13,13 +13,13 @@ import RxAppState
 final class IssuesViewController: UIViewController {
     private var disposeBag = DisposeBag()
     private let viewModel: IssuesViewModel
-    
     private let tableView = UITableView()
     private let searchController = UISearchController(searchResultsController: nil)
+    var query: String
         
-    init(_ viewModel: IssuesViewModel = IssuesViewModel()) {
+    init(_ viewModel: IssuesViewModel = IssuesViewModel(), query: String? = nil) {
         self.viewModel = viewModel
-        
+        self.query = query ?? "apple/swift"
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -29,16 +29,46 @@ final class IssuesViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
         setupUI()
-        bind()
+        bindUI()
+        bindViewModel()
     }
 }
 
 extension IssuesViewController {
-    private func bind() {
+    
+    private func bindUI() {
         
+        Observable.just(query)
+            .withUnretained(self)
+            .subscribe(onNext: { owner, text in
+                owner.searchController.searchBar.text = text
+            })
+            .disposed(by: disposeBag)
+        
+        tableView.rx.itemSelected
+            .withUnretained(self)
+            .subscribe(onNext: { owner, indexPath in
+                owner.tableView.deselectRow(at: indexPath, animated: false)
+            })
+            .disposed(by: disposeBag)
+        
+        tableView.rx.modelSelected(IssueData.self)
+            .withUnretained(self)
+            .subscribe(onNext: { owner, data in
+                if let linkURL = URL(string: data.link) {
+                    UIApplication.shared.open(linkURL)
+                } else {
+                    let deatilView = DetailViewController()
+                    owner.navigationController?.pushViewController(deatilView, animated: true)
+                }
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    private func bindViewModel() {
         let input = IssuesViewModel.Input(
-            viewWillAppear: rx.viewWillAppear.take(1).asObservable(),
             searchText: searchController.searchBar.rx.text.orEmpty.asObservable()
         )
         
@@ -47,6 +77,12 @@ extension IssuesViewController {
         output.cellData
             .drive(tableView.rx.items) { tv, row, data in
                 let indexPath = IndexPath(row: row, section: 0)
+                
+                if !data.image.isEmpty {
+                    let cell = tv.dequeueReusableCell(withIdentifier: String(describing: BannerTableCell.self), for: indexPath) as! BannerTableCell
+                    cell.setContent(data)
+                    return cell
+                }
                 
                 let cell = tv.dequeueReusableCell(withIdentifier: String(describing: IssuesTableCell.self), for: indexPath) as! IssuesTableCell
                 cell.setContent(data)
@@ -79,7 +115,9 @@ extension IssuesViewController {
         
         view.addSubview(tableView)
         tableView.do {
+            $0.estimatedRowHeight = 44
             $0.register(IssuesTableCell.self, forCellReuseIdentifier: String(describing: IssuesTableCell.self))
+            $0.register(BannerTableCell.self, forCellReuseIdentifier: String(describing: BannerTableCell.self))
             $0.snp.makeConstraints { $0.edges.equalToSuperview() }
         }
     }
