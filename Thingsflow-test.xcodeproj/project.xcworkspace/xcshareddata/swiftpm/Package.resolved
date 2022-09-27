@@ -10,6 +10,15 @@
       }
     },
     {
+      "identity" : "rxappstate",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pixeldock/RxAppState.git",
+      "state" : {
+        "revision" : "956f438ea16481c1bd9a8ca3bc169af7435aaf0b",
+        "version" : "1.7.1"
+      }
+    },
+    {
       "identity" : "rxswift",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/ReactiveX/RxSwift.git",
